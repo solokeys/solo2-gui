@@ -31,6 +31,22 @@ fn register_totp(user: String, secret: String) -> Result<String, String> {
 }
 
 #[tauri::command]
+fn list_totp() -> Result<Vec<String>, String> {
+    use solo2::apps::oath::App;
+
+    let mut app = App::new()
+        .map_err(|_| "could not construct OATH app")?;
+    app.select()
+        .map_err(|_| "could not select OATH app")?;
+
+    let labels = app.list()
+        .map_err(|_| "could not list")?;
+    dbg!(labels.len());
+    Ok(labels)
+
+}
+
+#[tauri::command]
 fn calculate_totp(label: String) -> Result<String, String> {
     use solo2::apps::oath::{App, Authenticate};
 

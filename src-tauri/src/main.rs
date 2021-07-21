@@ -9,6 +9,7 @@ fn main() {
 	tauri::Builder::default()
 	.invoke_handler(tauri::generate_handler![
         commands::get_uuid,
+        commands::list_totp,
         commands::register_totp,
         commands::calculate_totp,
     ])

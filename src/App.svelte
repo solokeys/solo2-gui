@@ -59,6 +59,12 @@
 		console.log(`TOTP calculated:: ${calculated_totp}`);
 	};
 
+  let listed_totp: string[] = [];
+  const list_totp = async () => {
+    console.log('Listing credentials');
+    listed_totp = await invoke('list_totp', {});
+  }
+
 
 </script>
 
@@ -98,6 +104,21 @@
 					{:else}
 						No TOTP registered just yet.
 					{/if}
+				</CardFooter>
+
+				<CardSubtitle>List TOTP</CardSubtitle>
+				<Button color="primary" on:click={list_totp}>List</Button>
+				<CardFooter>
+					{#if listed_totp.length !== 0}
+            <ul>
+              {#each listed_totp as label}
+              <li>{label}</li>
+              {/each}
+            </ul>
+          {:else}
+						No TOTP listed just yet.
+					{/if}
+
 				</CardFooter>
 
 				<CardSubtitle>Calculate TOTP</CardSubtitle>
