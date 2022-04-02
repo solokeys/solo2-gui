@@ -1,65 +1,64 @@
-use solo2::apps::App as _;
+use solo2::{Select as _, Solo2, Uuid, UuidSelectable};
 
-#[tauri::command]
-fn get_uuid() -> Result<String, String> {
-    use solo2::apps::admin::App;
-    let mut app = App::new()
-        .map_err(|_| "could not construct admin app")?;
-    app.select().map_err(|_| "could not select admin app")?;
-    let uuid = app.uuid().map_err(|_| "could not get a UUID")?;
-    Ok(hex::encode_upper(uuid.to_be_bytes()))
+fn solo2_from_uuid(uuid: &str) -> Result<Solo2, String> {
+    let uuid2 = Uuid::parse_str(&uuid)
+        .map_err(|_| format!("invalid UUID {}", &uuid))?;
+    let solo2 = Solo2::having(uuid2)
+        .map_err(|_| format!("no Solo2 found with UUID {}", &uuid))?;
+    Ok(solo2)
 }
 
 #[tauri::command]
-fn register_totp(user: String, secret: String) -> Result<String, String> {
-    use solo2::apps::oath::{App, Credential};
-    let credential = Credential::with_label_and_secret(&user, &secret)
+pub fn get_uuid() -> Result<String, String> {
+    use solo2::apps::Admin;
+
+    let mut solo2s = Solo2::list();
+    let solo2 = solo2s.get_mut(0)
+        .ok_or("could not find a Solo 2 device".to_string())?;
+    let mut app = Admin::select(solo2)
+        .map_err(|_| "could not select admin app")?;
+    // app.select().map_err(|_| "could not select admin app")?;
+    let uuid = app.uuid().map_err(|_| "could not get a UUID")?;
+    Ok(format!("{:X}", uuid))
+}
+
+#[tauri::command]
+pub fn register_totp(uuid: String, label: String, secret: String) -> Result<String, String> {
+    use solo2::apps::Oath;
+
+    let mut solo2 = solo2_from_uuid(&uuid)?;
+    let mut app = Oath::select(&mut solo2).map_err(|_| "could not select OATH app")?;
+
+    let credential = solo2::apps::oath::Credential::default_totp(&label, &secret)
         .map_err(|_| "could not parse secret")?;
-
-    let mut app = App::new()
-        .map_err(|_| "could not construct OATH app")?;
-    app.select()
-        .map_err(|_| "could not select OATH app")?;
-
 
     let label = app.register(credential)
         .map_err(|_| "could not register credential")?;
-    dbg!(&label);
 
     Ok(label)
-
 }
 
 #[tauri::command]
-fn list_totp() -> Result<Vec<String>, String> {
-    use solo2::apps::oath::App;
+pub fn list_totp(uuid: String) -> Result<Vec<String>, String> {
+    use solo2::apps::Oath;
 
-    let mut app = App::new()
-        .map_err(|_| "could not construct OATH app")?;
-    app.select()
-        .map_err(|_| "could not select OATH app")?;
+    let mut solo2 = solo2_from_uuid(&uuid)?;
+    let mut app = Oath::select(&mut solo2).map_err(|_| "could not select OATH app")?;
+    let labels = app.list().map_err(|_| "could not list labels")?;
 
-    let labels = app.list()
-        .map_err(|_| "could not list")?;
-    dbg!(labels.len());
     Ok(labels)
-
 }
 
 #[tauri::command]
-fn calculate_totp(label: String) -> Result<String, String> {
-    use solo2::apps::oath::{App, Authenticate};
+pub fn calculate_totp(uuid: String, label: String) -> Result<String, String> {
+    use solo2::apps::Oath;
 
-    let mut app = App::new()
-        .map_err(|_| "could not construct OATH app")?;
-    app.select()
-        .map_err(|_| "could not select OATH app")?;
+    let mut solo2 = solo2_from_uuid(&uuid)?;
+    let mut app = Oath::select(&mut solo2).map_err(|_| "could not select OATH app")?;
 
-    let authenticate = Authenticate::with_label(&label);
-    let code = app.authenticate(authenticate)
-        .map_err(|_| "could not authenticate")?;
+    let code = app.authenticate(solo2::apps::oath::Authenticate::with_label(&label))
+        .map_err(|_| format!("could not get TOTP code for label {}", &label))?;
 
-    dbg!(&code);
     Ok(code)
 }
 
