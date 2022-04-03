@@ -30,11 +30,13 @@ This will create standalone app and installer in `src-tauri/target/release` dire
 
 ## Useful links
 
--   [Tauri][tauri]
--   [Svelte][svelte]
--   [Sveltestrap][sveltestrap]
+- [DaisyUI][daisy-ui]
+- [Svelte][svelte]
+- [Tauri][tauri]
+- [Vite][vite]
 
-[tauri]: https://tauri.studio
-[svelte]: https://svelte.dev
-[sveltestrap]: https://sveltestrap.js.org
+[daisy-ui]: https://daisyui.com/
+[svelte]: https://svelte.dev/
+[tauri]: https://tauri.studio/
+[vite]: https://vitejs.dev/
 
