@@ -1,4 +1,5 @@
 use solo2::{Select as _, Solo2, Uuid, UuidSelectable};
+pub mod update;
 
 fn solo2_from_uuid(uuid: &str) -> Result<Solo2, String> {
     let uuid2 = Uuid::parse_str(&uuid)
@@ -9,17 +10,38 @@ fn solo2_from_uuid(uuid: &str) -> Result<Solo2, String> {
 }
 
 #[tauri::command]
-pub fn get_uuid() -> Result<String, String> {
+pub fn get_uuids() -> Result<Vec<String>, String> {
+
+    Ok(Solo2::list()
+        .iter()
+        .map(|solo2| format!("{:X}", solo2.uuid().simple()).to_string())
+        // .map(|solo2| format!("{}", &solo2))
+        .collect())
+}
+
+// #[tauri::command]
+// pub fn get_uuid() -> Result<String, String> {
+//     use solo2::apps::Admin;
+
+//     let mut solo2s = Solo2::list();
+//     let solo2 = solo2s.get_mut(0)
+//         .ok_or("could not find a Solo 2 device".to_string())?;
+//     let mut app = Admin::select(solo2)
+//         .map_err(|_| "could not select admin app")?;
+//     // app.select().map_err(|_| "could not select admin app")?;
+//     let uuid = app.uuid().map_err(|_| "could not get a UUID")?;
+//     Ok(format!("{:X}", uuid))
+// }
+
+#[tauri::command]
+pub fn wink(uuid: String) -> Result<String, String> {
     use solo2::apps::Admin;
 
-    let mut solo2s = Solo2::list();
-    let solo2 = solo2s.get_mut(0)
-        .ok_or("could not find a Solo 2 device".to_string())?;
-    let mut app = Admin::select(solo2)
+    let mut solo2 = solo2_from_uuid(&uuid)?;
+    let mut app = Admin::select(&mut solo2)
         .map_err(|_| "could not select admin app")?;
-    // app.select().map_err(|_| "could not select admin app")?;
-    let uuid = app.uuid().map_err(|_| "could not get a UUID")?;
-    Ok(format!("{:X}", uuid))
+    app.wink().map_err(|_| "could not wink device")?;
+    Ok("".into())
 }
 
 #[tauri::command]

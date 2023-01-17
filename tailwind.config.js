@@ -1,7 +1,9 @@
 import daisyui from 'daisyui';
+import typography from '@tailwindcss/typography';
 
 export default {
-  plugins: [daisyui],
+  // daisy must go after typography, don't be alphabetically sorted
+  plugins: [typography, daisyui],
     theme: {
     extend: {},
   },
